@@ -6,17 +6,13 @@ use Akeneo\Bundle\BatchBundle\Connector\ConnectorRegistry;
 use Akeneo\Bundle\BatchBundle\Entity\JobInstance;
 use Akeneo\Bundle\BatchBundle\Job\DoctrineJobRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
-use Doctrine\ORM\EntityManagerInterface;
 use Oro\Bundle\SecurityBundle\Annotation\AclAncestor;
 use Oro\Bundle\DataGridBundle\Extension\MassAction\MassActionParametersParser;
 use Pim\Bundle\DataGridBundle\Adapter\GridFilterAdapterInterface;
 use Pim\Bundle\EnrichBundle\AbstractController\AbstractDoctrineController;
 use Pim\Bundle\EnrichBundle\Form\Type\MassEditOperatorType;
 use Pim\Bundle\EnrichBundle\MassEditAction\Manager\MassEditJobManager;
-use Pim\Bundle\EnrichBundle\MassEditAction\Operation\MassEditOperationInterface;
 use Pim\Bundle\EnrichBundle\MassEditAction\OperationRegistry;
-use Pim\Bundle\EnrichBundle\MassEditAction\Operator\AbstractMassEditOperator;
-use Pim\Bundle\EnrichBundle\MassEditAction\OperatorRegistry;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Template;
 use Symfony\Bundle\FrameworkBundle\Templating\EngineInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -39,27 +35,17 @@ use Symfony\Component\Validator\ValidatorInterface;
  */
 class MassEditActionController extends AbstractDoctrineController
 {
-    /** @var AbstractMassEditOperator */
-    protected $operator;
-
     /** @var MassActionParametersParser */
     protected $parametersParser;
 
     /** @var ValidatorInterface */
     protected $validator;
 
-    /** @var array */
-    protected $objects;
-
     /** @var GridFilterAdapterInterface */
     protected $gridFilterAdapter;
 
     /** @var MassEditJobManager */
     protected $massEditJobManager;
-    /**
-     * @var OperationRegistry
-     */
-    private $operationRegistry;
 
     /** @var DoctrineJobRepository */
     protected $jobManager;
@@ -79,7 +65,6 @@ class MassEditActionController extends AbstractDoctrineController
      * @param TranslatorInterface        $translator
      * @param EventDispatcherInterface   $eventDispatcher
      * @param ManagerRegistry            $doctrine
-     * @param OperatorRegistry           $operatorRegistry
      * @param MassActionParametersParser $parametersParser
      * @param GridFilterAdapterInterface $gridFilterAdapter
      * @param MassEditJobManager         $massEditJobManager
@@ -97,7 +82,6 @@ class MassEditActionController extends AbstractDoctrineController
         TranslatorInterface $translator,
         EventDispatcherInterface $eventDispatcher,
         ManagerRegistry $doctrine,
-        OperatorRegistry $operatorRegistry,
         MassActionParametersParser $parametersParser,
         GridFilterAdapterInterface $gridFilterAdapter,
         MassEditJobManager $massEditJobManager,
@@ -117,7 +101,6 @@ class MassEditActionController extends AbstractDoctrineController
             $doctrine
         );
 
-        $this->operatorRegistry   = $operatorRegistry;
         $this->parametersParser   = $parametersParser;
         $this->gridFilterAdapter  = $gridFilterAdapter;
         $this->massEditJobManager = $massEditJobManager;
@@ -175,7 +158,6 @@ class MassEditActionController extends AbstractDoctrineController
 
         if ($this->request->isMethod('POST')) {
             $form->submit($this->request);
-//            $form = $this->getOperatorForm($operator);
         }
 
         return $this->render(
@@ -203,19 +185,20 @@ class MassEditActionController extends AbstractDoctrineController
 
         $form = $this->createForm(new MassEditOperatorType());
         $form->add('operation', $operation->getFormType(), $operation->getFormOptions());
-//        $form = $this->getOperatorForm($operator, ['Default', 'configureAction']);
         $form->submit($this->request);
 
         if ($form->isValid()) {
 
-//            $operator->getOperation()->saveConfiguration();
+            $operation = $form->getData()['operation'];
             $pimFilters = $this->gridFilterAdapter->transform($this->request);
             $operation->setFilters($pimFilters);
 
             $rawConfiguration = $operation->getBatchConfig();
-//            $this->massEditJobManager->launchJob($jobInstance, $this->getUser(), $rawConfiguration);
             //TODO: to remove !
-            $jobInstance = $this->jobManager->getJobManager()->getRepository('AkeneoBatchBundle:JobInstance')->findOneByCode('change_status');
+            $jobCode = $operation->getBatchJobCode();
+            $jobInstance = $this->jobManager->getJobManager()
+                ->getRepository('AkeneoBatchBundle:JobInstance')
+                ->findOneByCode($jobCode);
             $jobInstance = $this->getJobInstance($jobInstance->getId());
 
             $this->massEditJobManager->launchJob($jobInstance, $this->getUser(), $rawConfiguration);
@@ -234,7 +217,6 @@ class MassEditActionController extends AbstractDoctrineController
         }
 
         if ($form->isValid()) {
-//            $operator->finalizeOperation();
             $this->addFlash(
                 'success',
                 sprintf('pim_enrich.mass_edit_action.%s.launched_flash', $operationAlias)
@@ -249,7 +231,6 @@ class MassEditActionController extends AbstractDoctrineController
                 'form'         => $form->createView(),
                 'operationAlias' => $operationAlias,
                 'itemsName'      => $itemsName,
-//                'operator'     => $operator,
                 'queryParams'  => $this->getQueryParams()
             ]
         );
@@ -295,24 +276,6 @@ class MassEditActionController extends AbstractDoctrineController
         $jobInstance->setJob($job);
 
         return $jobInstance;
-    }
-
-    /**
-     * @param AbstractMassEditOperator $operator
-     * @param array                    $validationGroups
-     *
-     * @return Form
-     */
-    protected function getOperatorForm(AbstractMassEditOperator $operator, array $validationGroups = [])
-    {
-        return $this->createForm(
-            new MassEditOperatorType(),
-            $operator,
-            [
-                'operations' => $operator->getOperationChoices(),
-                'validation_groups' => $validationGroups
-            ]
-        );
     }
 
     protected function getItemsName($gridName)

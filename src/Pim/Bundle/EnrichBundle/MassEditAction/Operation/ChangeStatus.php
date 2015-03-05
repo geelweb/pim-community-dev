@@ -2,8 +2,6 @@
 
 namespace Pim\Bundle\EnrichBundle\MassEditAction\Operation;
 
-use Pim\Bundle\CatalogBundle\Model\ProductInterface;
-
 /**
  * Batch operation to change products status
  *
@@ -76,7 +74,12 @@ class ChangeStatus extends AbstractMassEditOperation implements
 
     public function getActions()
     {
-        return $this->isToEnable();
+        return [
+            [
+                'field' => 'enable',
+                'value' => $this->isToEnable()
+            ]
+        ];
     }
 
     /**
@@ -86,7 +89,15 @@ class ChangeStatus extends AbstractMassEditOperation implements
     {
         return addslashes(json_encode([
             'filters' => $this->getFilters(),
-            'data' => $this->getActions()
+            'actions' => $this->getActions()
         ]));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBatchJobCode()
+    {
+        return 'change_status';
     }
 }
