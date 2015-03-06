@@ -5,7 +5,7 @@ namespace Pim\Bundle\EnrichBundle\MassEditAction\Operation;
 use Pim\Bundle\CatalogBundle\Model\FamilyInterface;
 
 /**
- * Batch operation to change the family of products
+ * Mass edit operation to change the family of products
  *
  * @author    Filips Alpe <filips@akeneo.com>
  * @copyright 2013 Akeneo SAS (http://www.akeneo.com)

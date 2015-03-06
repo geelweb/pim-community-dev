@@ -72,10 +72,11 @@ class MassEditJobManager
         $pathFinder   = new PhpExecutableFinder();
 
         $cmd = sprintf(
-            '%s %s/console akeneo:batch:job --env=%s change_status %s --config="%s" >> %s/logs/batch_execute.log 2>&1',
+            '%s %s/console akeneo:batch:job --env=%s %s %s --config="%s" >> %s/logs/batch_execute.log 2>&1',
             $pathFinder->find(),
             $this->rootDir,
             $this->environment,
+            $jobInstance->getCode(),
             $executionId,
             $rawConfiguration,
             $this->rootDir
