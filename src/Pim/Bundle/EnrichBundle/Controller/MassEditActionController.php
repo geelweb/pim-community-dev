@@ -127,6 +127,7 @@ class MassEditActionController extends AbstractDoctrineController
             $form->submit($this->request);
             if ($form->isValid()) {
                 $data = $form->getData();
+
                 return $this->redirectToRoute(
                     'pim_enrich_mass_edit_action_configure',
                     $this->getQueryParams() + ['operationAlias' => $data['operationAlias']]
@@ -188,7 +189,6 @@ class MassEditActionController extends AbstractDoctrineController
         $form->submit($this->request);
 
         if ($form->isValid()) {
-
             $operation = $form->getData()['operation'];
             $pimFilters = $this->gridFilterAdapter->transform($this->request);
             $operation->setFilters($pimFilters);
@@ -295,7 +295,7 @@ class MassEditActionController extends AbstractDoctrineController
         $choices = [];
 
         foreach (array_keys($availableOperations) as $alias) {
-                $choices[$alias] = sprintf('pim_enrich.mass_edit_action.%s.label', $alias);
+            $choices[$alias] = sprintf('pim_enrich.mass_edit_action.%s.label', $alias);
         }
 
         return $this->createForm(

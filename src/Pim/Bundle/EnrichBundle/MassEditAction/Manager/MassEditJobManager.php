@@ -3,10 +3,8 @@
 namespace Pim\Bundle\EnrichBundle\MassEditAction\Manager;
 
 use Akeneo\Bundle\BatchBundle\Entity\JobExecution;
-use Pim\Bundle\EnrichBundle\MassEditAction\OperatorRegistry;
 use Pim\Bundle\ImportExportBundle\Event\JobProfileEvents;
 use Doctrine\Common\Persistence\ObjectManager;
-use Pim\Bundle\NotificationBundle\Manager\NotificationManager;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Akeneo\Bundle\BatchBundle\Entity\JobInstance;
 use Symfony\Component\EventDispatcher\GenericEvent;
@@ -109,7 +107,6 @@ class MassEditJobManager
         $jobExecution->setJobInstance($jobInstance)->setUser($user->getUsername());
         $this->objectManager->persist($jobExecution);
         $this->objectManager->flush($jobExecution);
-
 
         return $jobExecution;
     }
