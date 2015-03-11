@@ -23,6 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\SecurityContextInterface;
+use Symfony\Component\Translation\Exception\NotFoundResourceException;
 use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\ValidatorInterface;
 
@@ -188,7 +189,6 @@ class MassEditActionController extends AbstractDoctrineController
         $form->submit($this->request);
 
         if ($form->isValid()) {
-
             $operation = $form->getData()['operation'];
             $pimFilters = $this->gridFilterAdapter->transform($this->request);
             $operation->setFilters($pimFilters);
@@ -199,6 +199,11 @@ class MassEditActionController extends AbstractDoctrineController
             $jobInstance = $this->jobManager->getJobManager()
                 ->getRepository('AkeneoBatchBundle:JobInstance')
                 ->findOneByCode($jobCode);
+
+            if (null === $jobInstance) {
+                throw new NotFoundResourceException(sprintf('No job found with job code "%s"', $jobCode));
+            }
+
             $jobInstance = $this->getJobInstance($jobInstance->getId());
 
             $this->massEditJobManager->launchJob($jobInstance, $this->getUser(), $rawConfiguration);
@@ -295,7 +300,7 @@ class MassEditActionController extends AbstractDoctrineController
         $choices = [];
 
         foreach (array_keys($availableOperations) as $alias) {
-                $choices[$alias] = sprintf('pim_enrich.mass_edit_action.%s.label', $alias);
+            $choices[$alias] = sprintf('pim_enrich.mass_edit_action.%s.label', $alias);
         }
 
         return $this->createForm(
