@@ -91,7 +91,7 @@ class CsvFormater
      *          "scope":  "mobile",
      *          "data":   {"data": "10", "unit": "CENTIMETER"}
      *      }],
-     *      "enabled": "1",
+     *      "enabled": true,
      *      "categories": ["tshirt", "men"],
      *      "associations": {
      *          "XSELL": {
@@ -111,6 +111,10 @@ class CsvFormater
         foreach ($product as $column => $value) {
             $value  = $this->convertToStructuredField($column, $value);
             $result = $this->addFieldToCollection($result, $value);
+
+            // TODO: filter empty values, for instance a simple select with "" should not be kept as an update
+            // TODO: does not work with media
+            // TODO: does not work with no groups
         }
 
         return $result;
@@ -134,7 +138,9 @@ class CsvFormater
             return ['associations' => [$associationTypeCode => [$associatedWith => $value]]];
         } elseif (in_array($column, ['categories', 'groups'])) {
             return [$column => FieldNameBuilder::splitCollection($value)];
-        } elseif (in_array($column, ['enabled', 'family'])) {
+        } elseif ('enabled' === $column) {
+            return [$column => (bool) $value];
+        } elseif ('family' === $column) {
             return [$column => $value];
         } else {
             return $this->formatValue($column, $value);
